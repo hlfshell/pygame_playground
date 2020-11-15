@@ -47,17 +47,19 @@ class Car(pygame.sprite.Sprite):
             self._acceleration.y = 0.0
 
         self._velocity += self._acceleration
-        position = self._velocity + (0.5 * self._acceleration)
+        offset = self._velocity + (0.5 * self._acceleration)
         # if position[0] < 0.0:
         #     position[0] = 0.0
         # elif position[0] > 1.0:
         #     position[1] = 0
 
-        self._position += position
+        self._position += offset
 
-        self.rect.midbottom = self._position
+        # self.rect.midbottom = self._position
+        self.rect = self.rect.move(offset[0], offset[1])
 
-    def crash(self):
+    def crash(self, test):
+        print(test)
         self._score += -100
 
     def pass_goal(self):

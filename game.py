@@ -1,6 +1,7 @@
 import pygame
 from pygame.locals import *
 from car import Car
+from checkpoint import Checkpoint
 
 class Game:
     def __init__(self):
@@ -11,11 +12,14 @@ class Game:
         self._fps = 60
 
         self._cars : [Car] = pygame.sprite.Group()
-        self._goals = pygame.sprite.Group()
+        self._checkpoints : [Checkpoint] = pygame.sprite.Group()
         self._track = pygame.sprite.Group()
 
     def add_car(self, car : Car):
         self._cars.add(car)
+
+    def add_checkpoint(self, checkpoint : Checkpoint):
+        print(self._checkpoints.add(checkpoint))
 
     def on_init(self):
         pygame.init()
@@ -31,12 +35,17 @@ class Game:
         for car in self._cars:
             car.move()
             # Calculate if the car impacts
-            pygame.sprite.spritecollide(car, self._track, car.crash)
-            pygame.sprit.spritecollide(car, self._goals, car.pass_goal)
+            trackCollions = pygame.sprite.spritecollide(car, self._track, False)
+            checkpointCollisions = pygame.sprite.spritecollide(car, self._checkpoints, False)
+            for collision in checkpointCollisions:
+                car.crash(collision)
 
 
     def on_render(self):
         self._display_surface.fill((0,0,0))
+        for checkpoint in self._checkpoints:
+            print(checkpoint)
+            self._display_surface.blit(checkpoint.surface, checkpoint.rect)
         for car in self._cars:
             self._display_surface.blit(car.surf, car.rect)
         pygame.display.update()
@@ -59,5 +68,8 @@ class Game:
 if __name__ == "__main__":
     game = Game()
     car = Car("one", (20, 30))
+    checkpoint = Checkpoint("abc123", (20, 20), (30, 30))
+    print(checkpoint)
     game.add_car(car)
+    game.add_checkpoint(checkpoint)
     game.on_execute()
