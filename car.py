@@ -5,6 +5,7 @@ import numpy as np
 from pygame.locals import K_LEFT, K_RIGHT, K_UP, K_DOWN
 
 im = Image.open('car_sprite.png')
+im = im.resize((28, 14))
 
 class Car(pygame.sprite.Sprite):
 
@@ -74,7 +75,6 @@ class Car(pygame.sprite.Sprite):
         if velocity_magnitude > 10:
             velocity_magnitude = 10
 
-        print("vel mag", velocity_magnitude)
         rotation = -self._rotation
         # if velocity_magnitude < 0:
         #     # rotation = self._rotation

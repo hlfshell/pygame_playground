@@ -2,18 +2,22 @@ import pygame
 from pygame.locals import *
 from car import Car
 from checkpoint import Checkpoint
+from track import Track
+import math
 
 class Game:
-    def __init__(self):
+    def __init__(self, trackname : str):
         self._running = True
         self._display_surface = None
-        self.size = self.width, self.height = 640, 400
         self._frame_per_sec = pygame.time.Clock()
         self._fps = 60
 
         self._cars : [Car] = pygame.sprite.Group()
         self._checkpoints : [Checkpoint] = pygame.sprite.Group()
-        self._track = pygame.sprite.Group()
+        # self._track_group = pygame.sprite.Group()
+        self._trackname = trackname
+        self._car_spawn_position = None
+        self._car_spawn_rotation = None
 
     def add_car(self, car : Car):
         self._cars.add(car)
@@ -23,7 +27,8 @@ class Game:
 
     def on_init(self):
         pygame.init()
-        self._display_surface = pygame.display.set_mode(self.size)
+        self._track = Track(self._trackname)
+        self._display_surface = pygame.display.set_mode(self._track.get_size())
         self._running = True
         pygame.display.set_caption("Car Game")
 
@@ -35,14 +40,15 @@ class Game:
         for car in self._cars:
             car.move()
             # Calculate if the car impacts
-            trackCollions = pygame.sprite.spritecollide(car, self._track, False)
+            # trackCollions = pygame.sprite.spritecollide(car, self._track, False)
             checkpointCollisions = pygame.sprite.spritecollide(car, self._checkpoints, False)
             for collision in checkpointCollisions:
                 car.crash(collision)
 
 
     def on_render(self):
-        self._display_surface.fill((0,0,0))
+        self._display_surface.fill((255,255,255))
+        self._display_surface.blit(self._track._surface, self._track._rect)
         for checkpoint in self._checkpoints:
             self._display_surface.blit(checkpoint.surface, checkpoint.rect)
         for car in self._cars:
@@ -54,10 +60,28 @@ class Game:
     def on_cleanup(self):
         pass
 
-    def on_execute(self):
-        if self.on_init() == False:
-            self._running = False
-        
+    def set_car_spawn(self):
+        while(self._car_spawn_rotation is None):
+            self.on_render()
+            if self._car_spawn_position is not None:
+                pygame.draw.line(self._display_surface, (255, 0, 0), self._car_spawn_position, pygame.mouse.get_pos(), width=3)
+                pygame.display.update()
+            for event in pygame.event.get():
+                # self.on_event(event)
+                left, _, _ = pygame.mouse.get_pressed()
+                if left:
+                    if self._car_spawn_position is None:
+                        self._car_spawn_position = pygame.mouse.get_pos()
+                    else:
+                        # Figure out our rotation angle from the new point
+                        point = pygame.mouse.get_pos()
+                        radians = math.atan2(point[0]-self._car_spawn_position[0], point[1]-self._car_spawn_position[1])
+                        self._car_spawn_rotation = math.degrees(radians)
+
+    def set_checkpoints(self):
+        pass
+
+    def on_execute(self):       
         while(self._running):
             for event in pygame.event.get():
                 self.on_event(event)
@@ -65,10 +89,21 @@ class Game:
             self.on_render()
         self.on_cleanup()
 
+    def play(self):
+        if self.on_init() == False:
+            self._running = False
+
+        self.set_car_spawn()
+        # Spawn a car
+        car = Car("one", self._car_spawn_position, self._car_spawn_rotation)
+        self.add_car(car)
+        self.on_execute()
+
 if __name__ == "__main__":
-    game = Game()
-    car = Car("one", (20, 30))
-    checkpoint = Checkpoint("abc123", (20, 20), (30, 30))
-    game.add_car(car)
-    game.add_checkpoint(checkpoint)
-    game.on_execute()
+    game = Game("track1.png")
+    # car = Car("one", (20, 30))
+    # checkpoint = Checkpoint("abc123", (20, 20), (30, 30))
+    # game.add_car(car)
+    # game.add_checkpoint(checkpoint)
+    game.play()
+    # game.on_execute()
