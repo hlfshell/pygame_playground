@@ -4,6 +4,7 @@ from car import Car
 from checkpoint import Checkpoint
 from track import Track
 import math
+from pygame.locals import K_d, K_RETURN
 
 class Game:
     def __init__(self, trackname : str):
@@ -13,7 +14,7 @@ class Game:
         self._fps = 60
 
         self._cars : [Car] = pygame.sprite.Group()
-        self._checkpoints : [Checkpoint] = pygame.sprite.Group()
+        self._checkpoints : [Checkpoint] = []
         # self._track_group = pygame.sprite.Group()
         self._trackname = trackname
         self._car_spawn_position = None
@@ -49,8 +50,6 @@ class Game:
     def on_render(self):
         self._display_surface.fill((255,255,255))
         self._display_surface.blit(self._track._surface, self._track._rect)
-        for checkpoint in self._checkpoints:
-            self._display_surface.blit(checkpoint.surface, checkpoint.rect)
         for car in self._cars:
             car.render()
             self._display_surface.blit(car.surf, car.rect)
@@ -79,7 +78,41 @@ class Game:
                         self._car_spawn_rotation = math.degrees(radians) - 90
 
     def set_checkpoints(self):
-        pass
+        pressed_keys = pygame.key.get_pressed()
+        checkpoint_start = None
+        checkpoint_id = 0
+
+        while(not pressed_keys[K_RETURN]):
+            pressed_keys = pygame.key.get_pressed()
+            self.on_render()
+            for checkpoint in self._checkpoints:
+                checkpoint.draw(self._display_surface)
+                pygame.display.update()
+                
+            if checkpoint_start is not None:
+                pygame.draw.line(self._display_surface, (255, 255, 0), checkpoint_start, pygame.mouse.get_pos(), width=3)
+                pygame.display.update()
+
+            for event in pygame.event.get():
+                left, _, _ = pygame.mouse.get_pressed()
+                if left:
+                    if checkpoint_start is None:
+                        checkpoint_start = pygame.mouse.get_pos()
+                    else:
+                        checkpoint = Checkpoint(str(checkpoint_id), checkpoint_start, pygame.mouse.get_pos())
+                        self._checkpoints.append(checkpoint)
+                        checkpoint_start = None
+                        checkpoint_id += 1
+                
+                # Handle if the D key is pressed
+                elif event.type == pygame.KEYDOWN and event.key == K_d:
+                    # If the D key was pressed and we were drawing a new checkpoint, cancel
+                    if checkpoint_start is not None:
+                        checkpoint_start = None
+                        continue
+                    # Otherwise - remove the last drawn checkpoint
+                    elif len(self._checkpoints) > 0:
+                        self._checkpoints = self._checkpoints[:-1]
 
     def on_execute(self):       
         while(self._running):
@@ -97,6 +130,7 @@ class Game:
         # Spawn a car
         car = Car("one", self._car_spawn_position, self._car_spawn_rotation)
         self.add_car(car)
+        self.set_checkpoints()
         self.on_execute()
 
 if __name__ == "__main__":
