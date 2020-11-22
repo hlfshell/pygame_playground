@@ -76,7 +76,7 @@ class Game:
                         # Figure out our rotation angle from the new point
                         point = pygame.mouse.get_pos()
                         radians = math.atan2(point[0]-self._car_spawn_position[0], point[1]-self._car_spawn_position[1])
-                        self._car_spawn_rotation = math.degrees(radians)
+                        self._car_spawn_rotation = math.degrees(radians) - 90
 
     def set_checkpoints(self):
         pass
